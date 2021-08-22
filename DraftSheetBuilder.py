@@ -6,7 +6,7 @@ from pandas.core.frame import DataFrame
 
 
 ## CONSTANTS
-POS_RANK_REGEX = r'([a-z]{1,3})(\d{1,2})'
+POS_RANK_REGEX = r'([a-z]{1,3})(\d{1,3})'
 SOS_REGEX = r'(\d) out of \d stars'
 PLAYER_NAME_REGEX = r'(.*.)(\s\([A-Z]{1,3}\))'
 WEEKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"]
@@ -15,9 +15,9 @@ OUTPUT_PATH = "./DraftSheets/2020_DRAFT_SHEET.xlsx"
 
 ## HELPER METHODS
 def get_starters(previous_year_data:DataFrame):
-    """Retrieves starting players from previous year (Top 10 QB's, 20 RB's, 30 WR's, and 10 TE's"""
+    """Retrieves starting players from previous year (Top 12 QB's, 20 RB's, 30 WR's, and 10 TE's"""
 
-    qb_starters = previous_year_data[previous_year_data['Position'] == 'QB'].sort_values('Points', ascending=False).head(10)
+    qb_starters = previous_year_data[previous_year_data['Position'] == 'QB'].sort_values('Points', ascending=False).head(12)
     rb_starters = previous_year_data[previous_year_data['Position'] == 'RB'].sort_values('Points', ascending=False).head(20)
     wr_starters = previous_year_data[previous_year_data['Position'] == 'WR'].sort_values('Points', ascending=False).head(30)
     te_starters = previous_year_data[previous_year_data['Position'] == 'TE'].sort_values('Points', ascending=False).head(10)
@@ -284,7 +284,7 @@ if __name__ == "__main__":
     base_df["Consistency"] = base_df.apply(lambda row: get_consistency(row.PLAYER, row.POSITION, row.GAMES_PLAYED, starter_points, weekly_points_df), axis=1)
     base_df["Explosiveness"] = base_df.apply(lambda row: get_explosiveness(row.PLAYER, row.POSITION, row.GAMES_PLAYED, starter_points, weekly_points_df), axis=1)
     base_df["Available?"] = "Y"
-    
+
     # Add previous year stats to base dataframe
     qb_2020_stats = pd.read_csv("./Data/2020_Stats_QB.csv")
     rb_2020_stats = pd.read_csv("./Data/2020_Stats_RB.csv")

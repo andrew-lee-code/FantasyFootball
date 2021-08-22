@@ -22,7 +22,7 @@ On draft day, it is important to understand the limitations of this draft board.
     </ul>
   
 ## The Concept of Starters  
-Many of the below stats are calculated based on how a player performed compared to a "starter" at their position in the previous season. To be considered a starter, a player had to be either a top 10 QB, top 20 RB, top 30 WR, or top 10 TE. Defenses and kickers were excluded since they are heavily matchup-dependent. 
+Many of the below stats are calculated based on how a player performed compared to a "starter" at their position in the previous season. To be considered a starter, a player had to be either a top 12 QB, top 20 RB, top 30 WR, or top 10 TE. Defenses and kickers were excluded since they are heavily matchup-dependent. 
   
 ## Startability  
 A players Startability is a score 0-1. It is the proportion of weeks where a player performed above average for a starter at their position.  
