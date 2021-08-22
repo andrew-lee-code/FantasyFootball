@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import re
 
@@ -165,7 +166,7 @@ def get_explosiveness(player:str, position:str, games_played:int, starter_points
         if points > (starter_points[position] * 1.33):
             explosive_games += 1
 
-    return (float(explosive_games) / float(games_played))
+    return np.cbrt((float(explosive_games) / float(games_played)))
 
 def add_previous_year_stats(df:DataFrame, qb_stats:DataFrame, rb_stats:DataFrame, wr_stats:DataFrame, te_stats:DataFrame):
     """Adds previous year's stats to dataframe"""
@@ -236,6 +237,11 @@ def add_previous_year_stats(df:DataFrame, qb_stats:DataFrame, rb_stats:DataFrame
 def output_draft_sheet(andrewlytics:DataFrame, weekly_df:DataFrame):
     """Compiles Andrewlytics and other player stats into final excel sheet"""
 
+    # Reorder columns
+    andrewlytics = andrewlytics[["Available?", "TIER", "RANK", "POSITION_RANK", "POSITION", "PLAYER", "TEAM", "BYE", "SOS", "ECR VS. ADP", "Startability", "Starter_PPG_Delta",
+                                "Consistency", "Explosiveness", "PPG", "GAMES_PLAYED", "Passing YPG", "Passing TD", "Rushes PG","Rushing YPG", "Rushing TD", "Targets PG", "Receiving YPG", "Receiving TD"]]
+
+    # Create sheet to explain stats
     read_me = pd.DataFrame(columns=["COLUMN_NAME", "EXPLANATION"])
     read_me = read_me.append({"COLUMN_NAME" : "RANK", "EXPLANATION": "Consensus ranking from 118 experts"} ,ignore_index=True)
     read_me = read_me.append({"COLUMN_NAME" : "TIER", "EXPLANATION": "Consensus tier from 118 experts"} ,ignore_index=True)
