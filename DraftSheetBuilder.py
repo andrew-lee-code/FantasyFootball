@@ -9,9 +9,17 @@ from pandas.core.frame import DataFrame
 POS_RANK_REGEX = r'([a-z]{1,3})(\d{1,3})'
 SOS_REGEX = r'(\d) out of \d stars'
 PLAYER_NAME_REGEX = r'(.*.)(\s\([A-Z]{1,3}\))'
-WEEKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"]
-OUTPUT_PATH = "./DraftSheets/2020_DRAFT_SHEET.xlsx"
-
+WEEKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"]
+OUTPUT_PATH = "./DraftSheets/2022_DRAFT_SHEET.xlsx"
+PREVIOUS_YEARS_TOTAL_PATH = "./InputData/2022DraftDataHalfPPR/2021_total.csv"
+PREVIOUS_YEAR_WEEKLY_BASEPATH = "./InputData/2022DraftDataHalfPPR/2021_Week"
+CURRENT_YEAR_CONSENSUS_PATH = "./InputData/2022DraftDataHalfPPR/2022_Consensus_Rankings.csv"
+PREVIOUS_YEAR_QB_PATH = "./InputData/2022DraftDataHalfPPR/2021_Stats_QB.csv"
+PREVIOUS_YEAR_RB_PATH = "./InputData/2022DraftDataHalfPPR/2021_Stats_RB.csv"
+PREVIOUS_YEAR_WR_PATH = "./InputData/2022DraftDataHalfPPR/2021_Stats_WR.csv"
+PREVIOUS_YEAR_TE_PATH = "./InputData/2022DraftDataHalfPPR/2021_Stats_TE.csv"
+THIS_YEAR = "2022"
+PREVIOUS_YEAR = "2021"
 
 ## HELPER METHODS
 def get_starters(previous_year_data:DataFrame):
@@ -193,14 +201,14 @@ def add_previous_year_stats(df:DataFrame, qb_stats:DataFrame, rb_stats:DataFrame
                 df.loc[index, "Passing YPG"] = float(qb_stats.loc[qb_stats["Player"] == row.PLAYER, "P_YDS"].item().replace(',','')) / games if games > 0 else 0 
                 df.loc[index, "Passing TD"] = qb_stats.loc[qb_stats["Player"] == row.PLAYER, "PTD"].item() 
                 df.loc[index, "Rushes PG"] = float(qb_stats.loc[qb_stats["Player"] == row.PLAYER, "R_ATT"].item()) / games if games > 0 else 0 
-                df.loc[index, "Rushing YPG"] = float(qb_stats.loc[qb_stats["Player"] == row.PLAYER, "R_YDS"].item().replace(',','')) / games if games > 0 else 0 
+                df.loc[index, "Rushing YPG"] = float(str(qb_stats.loc[qb_stats["Player"] == row.PLAYER, "R_YDS"].item()).replace(',','')) / games if games > 0 else 0 
                 df.loc[index, "Rushing TD"] = qb_stats.loc[qb_stats["Player"] == row.PLAYER, "R_TD"].item() 
                 df.loc[index, "Targets PG"] = "-"
                 df.loc[index, "Receiving YPG"] = "-"
                 df.loc[index, "Receiving TD"] = "-"
             elif row.POSITION == "RB":
                 games = rb_stats.loc[rb_stats["Player"] == row.PLAYER, "G"].item() 
-                df.loc[index, "PPG"] = rb_stats.loc[rb_stats["Player"] == row.PLAYER, "FPTS/G"].item() 
+                df.loc[index, "PPG"] = rb_stats.loc[rb_stats["Player"] == row.PLAYER, "FPTS/G"].item() #problemo line
                 df.loc[index, "Passing YPG"] = "-"
                 df.loc[index, "Passing TD"] = "-"
                 df.loc[index, "Rushes PG"] = float(rb_stats.loc[rb_stats["Player"] == row.PLAYER, "RU_ATT"].item()) / games if games > 0 else 0 
@@ -254,42 +262,50 @@ def output_draft_sheet(andrewlytics:DataFrame, weekly_df:DataFrame):
 
     with pd.ExcelWriter(OUTPUT_PATH) as writer:  
         andrewlytics.to_excel(writer, sheet_name='DRAFT_BOARD', index=False)
-        weekly_df.to_excel(writer, sheet_name='2020_WEEKLY', index=False)
+        weekly_df.to_excel(writer, sheet_name=f'{PREVIOUS_YEAR}_WEEKLY', index=False)
         read_me.to_excel(writer, sheet_name='READ_ME', index=False)
 
 
 ## MAIN
 if __name__ == "__main__":
     # Get Starters from previous year
-    data_2020 = pd.read_csv("./Data/2020_total.csv")
-    starters = get_starters(data_2020)
+    print("Calculating starting caliber players from previous year...")
+    previous_year_data = pd.read_csv(PREVIOUS_YEARS_TOTAL_PATH)
+    starters = get_starters(previous_year_data)
 
     # Get starter points per game
+    print("Calculating PPG for a starter at each position...")
     starter_points = get_starter_PPGs(starters)
 
     # Get weekly points dataframe
-    weekly_filenames = [f"./Data/2020_Week{week}.csv" for week in WEEKS]
+    print("Loading weekly points data from previous year...")
+    weekly_filenames = [f"{PREVIOUS_YEAR_WEEKLY_BASEPATH}{week}.csv" for week in WEEKS]
     weekly_points_df = combine_weekly_points_files(weekly_filenames)
 
     # Clean consensus rankings df
-    base_df = pd.read_csv("./Data/2021_Consensus_Rankings.csv")
+    print("Cleaning consensus projections for this year...")
+    base_df = pd.read_csv(CURRENT_YEAR_CONSENSUS_PATH)
     base_df = clean_consensus_ratings(base_df)
 
     # Add games played to base dataframe
-    base_df = add_games_played_stat(data_2020, base_df)
+    print("Add Games Played data to dataframe..")
+    base_df = add_games_played_stat(previous_year_data, base_df)
 
     # Add Andrewlytics
+    print("Addding Andrewlytics to dataframe..")
     base_df["Startability"] = base_df.apply(lambda row: get_startability(starter_points, row.PLAYER, row.POSITION, weekly_points_df), axis=1)
-    base_df["Starter_PPG_Delta"] = base_df.apply(lambda row: get_starter_PPG_delta(row.PLAYER, row.POSITION, starter_points, data_2020), axis=1)
+    base_df["Starter_PPG_Delta"] = base_df.apply(lambda row: get_starter_PPG_delta(row.PLAYER, row.POSITION, starter_points, previous_year_data), axis=1)
     base_df["Consistency"] = base_df.apply(lambda row: get_consistency(row.PLAYER, row.POSITION, row.GAMES_PLAYED, starter_points, weekly_points_df), axis=1)
     base_df["Explosiveness"] = base_df.apply(lambda row: get_explosiveness(row.PLAYER, row.POSITION, row.GAMES_PLAYED, starter_points, weekly_points_df), axis=1)
     base_df["Available?"] = "Y"
 
     # Add previous year stats to base dataframe
-    qb_2020_stats = pd.read_csv("./Data/2020_Stats_QB.csv")
-    rb_2020_stats = pd.read_csv("./Data/2020_Stats_RB.csv")
-    wr_2020_stats = pd.read_csv("./Data/2020_Stats_WR.csv")
-    te_2020_stats = pd.read_csv("./Data/2020_Stats_TE.csv")
-    base_df = add_previous_year_stats(base_df, qb_2020_stats, rb_2020_stats, wr_2020_stats, te_2020_stats)
+    previous_year_qb_stats = pd.read_csv(PREVIOUS_YEAR_QB_PATH)
+    previous_year_rb_stats = pd.read_csv(PREVIOUS_YEAR_RB_PATH)
+    previous_year_wr_stats = pd.read_csv(PREVIOUS_YEAR_WR_PATH)
+    previous_year_te_stats = pd.read_csv(PREVIOUS_YEAR_TE_PATH)
+    print("Addding previous year's stats to dataframe..")
+    base_df = add_previous_year_stats(base_df, previous_year_qb_stats, previous_year_rb_stats, previous_year_wr_stats, previous_year_te_stats)
 
+    print("Outputting final draft sheet..")
     output_draft_sheet(base_df, weekly_points_df)
