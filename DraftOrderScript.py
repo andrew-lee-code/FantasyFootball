@@ -12,5 +12,3 @@ OWNERS.insert(WINNERS_CHOICE - 1, WINNER)
 for i in range(0, len(OWNERS)):
     time.sleep(1)  # Add dramatic pauses
     print(f"{i+1}.) {OWNERS[i]}")
-
-# poopoo
